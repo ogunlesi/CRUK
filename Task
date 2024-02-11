@@ -1,0 +1,69 @@
+import os
+import pandas as pd
+pip install parquet-cli 
+print(os.getcwd())
+os.chdir("/Users/Mac/documents")
+df =  pd.read_parquet('yellow_tripdata_2021-03.parquet', engine='pyarrow')
+
+# Preview first 5 rows
+df.head() 
+
+# RENAME DATASET in dataframe 
+taxi_data = pd.read_parquet('yellow_tripdata_2021-03.parquet', engine='pyarrow')
+
+# Define the IDs to be swapped
+location1_id = 161
+location2_id = 237
+
+# Filter rows with Location ID 161 or 237
+rows_to_swap = taxi_data[(taxi_data['PULocationID'] == location1_id) | (taxi_data['PULocationID'] == location2_id)]
+
+# Swap the Location IDs
+taxi_data.loc[rows_to_swap.index, 'PULocationID'] = taxi_data.loc[rows_to_swap.index, 'PULocationID'].replace({location1_id: location2_id, location2_id: location1_id})
+
+# Filter data for March 2021
+march_data = taxi_data[(taxi_data['tpep_pickup_datetime'] >= '2021-03-01') & (taxi_data['tpep_pickup_datetime'] < '2021-04-01')]
+
+# Calculate total distance travelled in miles
+total_distance = march_data['trip_distance'].sum()
+
+# Calculate total time taken in seconds
+total_time = (march_data['tpep_dropoff_datetime'] - march_data['tpep_pickup_datetime']).dt.total_seconds().sum()
+
+# Convert total time to hours
+total_time_hours = total_time / 3600
+
+# Calculate average speed in miles per hour
+average_speed = total_distance / total_time_hours
+print("Average speed in March 2021:", average_speed, "miles per hour")
+-------
+# Calculate speed for each trip
+march_data['speed'] = march_data['trip_distance'] / ((march_data['tpep_dropoff_datetime'] - march_data['tpep_pickup_datetime']).dt.total_seconds() / 3600)
+# Calculate mean speed for all trips in March 2021
+mean_speed = march_data['speed'].mean()
+# Filter trips slower than the average speed
+slow_trips = march_data[march_data['speed'] < mean_speed]
+# Group by week and Pick up locations, count occurrences, and sort
+top_pickup_locations = slow_trips.groupby([pd.Grouper(key='tpep_pickup_datetime', freq='W'), 'PULocationID']).size().reset_index(name='count').sort_values(by='count', ascending=False)
+# Extract top 5 pick-up locations for each week
+top_pickup_locations_grouped = top_pickup_locations.groupby(pd.Grouper(key='tpep_pickup_datetime')).head(5)
+print("Top 5 Pick-up locations for each week resulting in trips slower than the average speed:")
+print(top_pickup_locations_grouped)
+
+
+
+Data quality steps:
+
+Filtering out invalid rows: Rows with zero distance or zero time taken are discarded, ensuring that only valid data is used for calculating the average speed.
+# Filter out rows with zero distance or zero time taken
+valid_data = taxi_data[(taxi_data['trip_distance'] > 0) & (taxi_data['time_taken'] > 0)]
+
+To scale the solution to work with a 1 TB dataset with 10 GB of new data arriving each day, several changes would be necessary:
+
+Data partitioning and indexing: Partitioning the data and creating appropriate indexes can improve the efficiency of data retrieval and processing, especially when dealing with large datasets.
+cloud-based storage solutions.
+
+Incremental processing for new data: Instead of processing the entire dataset each time, incremental processing can be used to process only the new data that arrives each day. 
+
+distributed computing:
+These frameworks can distribute the data across multiple nodes in a cluster and perform computations in parallel, allowing for efficient processing of large datasets.

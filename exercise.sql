@@ -88,6 +88,8 @@ Filtering out invalid rows: Rows with zero distance or zero time taken are disca
 # Filter out rows with zero distance or zero time taken
 valid_data = taxi_data[(taxi_data['trip_distance'] > 0) & (taxi_data['time_taken'] > 0)]
 
+  some data in the file isn't within the specified date range
+
 To scale the solution to work with a 1 TB dataset with 10 GB of new data arriving each day, several changes would be necessary:
 
 Data partitioning and indexing: Partitioning the data and creating appropriate indexes can improve the efficiency of data retrieval and processing, especially when dealing with large datasets.
